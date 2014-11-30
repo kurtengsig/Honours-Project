@@ -6,19 +6,18 @@
 #include <exception>
 #include <string>
 #include <sstream>
+#include <iostream>
 class database
 {
 public:
     database();
     //MUST BE RETURNED TO BEING PRIVATE
-    bool loginReq(std::string username, std::string password, std::string* output);
+    bool loginReq(std::string username, std::string password, std::string ip, std::string port, std::string** output, int* num);
     bool logoutReq(std::string username);
     bool registerUserReq(std::string username, std::string password, std::string* output); // no return required
     bool friendsListReq(std::string username, std::string** output, int* n); // array return required
-    bool contactInfoReq(std::string username, std::string** output); // array return required
+    bool contactInfoReq(std::string username, std::string** output, int *n); // array return required
     bool addFriendReq(std::string username, std::string friendUsername); // no return string required
-    void miscFunction(std::string q);
-    bool updateContactInfo(std::string username, std::string ipaddress, std::string port);
 private:
     QSqlDatabase db;
 

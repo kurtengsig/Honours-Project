@@ -9,7 +9,7 @@ class encoder
 public:
     encoder();
     std::string encode(std::string* input, int numberOfInputs);
-    void decode(std::string** output, std::string input);
+    void decode(std::string** output, int *size, std::string input);
 };
 
 #endif // ENCODER_H

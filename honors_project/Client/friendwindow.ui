@@ -14,19 +14,30 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="verticalLayoutWidget">
+   <widget class="QListWidget" name="friendList">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>251</width>
-      <height>551</height>
+      <x>10</x>
+      <y>30</y>
+      <width>231</width>
+      <height>531</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout"/>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>10</y>
+      <width>101</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Online Friends:</string>
+    </property>
    </widget>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -38,8 +49,10 @@
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>Options</string>
     </property>
+    <addaction name="actionAdd_Friend"/>
+    <addaction name="separator"/>
     <addaction name="actionLogout"/>
    </widget>
    <addaction name="menuFile"/>
@@ -47,6 +60,11 @@
   <action name="actionLogout">
    <property name="text">
     <string>Logout</string>
+   </property>
+  </action>
+  <action name="actionAdd_Friend">
+   <property name="text">
+    <string>Add Friend</string>
    </property>
   </action>
  </widget>
