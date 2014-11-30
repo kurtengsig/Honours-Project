@@ -15,13 +15,17 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         monitoringwindow.cpp \
-    network.cpp \
     database.cpp \
-    encoder.cpp
+    encoder.cpp \
+    connection.cpp \
+    controller.cpp \
+    requesthandler.cpp
 
 HEADERS  += monitoringwindow.h \
-    network.h \
     database.h \
-    encoder.h
+    encoder.h \
+    connection.h \
+    controller.h \
+    requesthandler.h
 
 FORMS    += monitoringwindow.ui

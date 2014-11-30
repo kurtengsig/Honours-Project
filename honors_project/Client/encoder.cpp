@@ -22,7 +22,7 @@ std::string encoder::encode(std::string* input, int numberOfInputs){
  * Output parameter: output<string**> the pointer to the array that is to be returned
  * Upon Completion: An array has been allocated dynamically and the output pointer is pointing at it
  */
-void encoder::decode(std::string** output, std::string input){
+void encoder::decode(std::string** output, int* size, std::string input){
     std::vector<std::string> v; // used until the string has been completely split and the size is known
     std::string s = input;
     std::string delimiter = "~!~";
@@ -36,8 +36,8 @@ void encoder::decode(std::string** output, std::string input){
     }
     v.push_back(s);
     std::string* temp = new std::string[v.size()];
-
-    for(int i =0; i < 4; i++)
+    *size = v.size();
+    for(int i =0; i < v.size(); i++)
         temp[i] = v[i];
     *output = temp;
 }

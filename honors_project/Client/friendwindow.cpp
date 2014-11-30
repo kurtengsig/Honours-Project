@@ -16,3 +16,18 @@ FriendWindow::~FriendWindow(){
 void FriendWindow::on_actionLogout_triggered(){
     cont->notifyLogoutRequest();
 }
+
+void FriendWindow::on_friendList_itemDoubleClicked(QListWidgetItem *item){
+    cont->notifyConversationCreation(item->text().toStdString());
+}
+void FriendWindow::populateFriendList(std::string* s, int count){
+    for(int i=0; i < count; ++i){
+        QString q(s[i].c_str());
+        ui->friendList->addItem(q);
+    }
+}
+
+void FriendWindow::on_actionAdd_Friend_triggered(){
+    AddFriendDialog* a = new AddFriendDialog(cont);
+    a->show();
+}

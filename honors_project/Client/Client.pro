@@ -17,13 +17,23 @@ SOURCES += main.cpp\
     network.cpp \
     controller.cpp \
     encoder.cpp \
-    friendwindow.cpp
+    friendwindow.cpp \
+    addfrienddialog.cpp \
+    conversationwindow.cpp \
+    conversationcontroller.cpp \
+    serverconnection.cpp
 
 HEADERS  += loginwindow.h \
     network.h \
     controller.h \
     encoder.h \
-    friendwindow.h
+    friendwindow.h \
+    addfrienddialog.h \
+    conversationwindow.h \
+    conversationcontroller.h \
+    serverconnection.h
 
 FORMS    += loginwindow.ui \
-    friendwindow.ui
+    friendwindow.ui \
+    addfrienddialog.ui \
+    conversationwindow.ui
