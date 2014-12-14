@@ -25,3 +25,6 @@ void LoginWindow::on_submitButton_clicked(){
 void LoginWindow::setErrorMessage(std::string error){
     ui->errorMessage->setText(QString(error.c_str()));
 }
+void LoginWindow::on_actionRegister_triggered(){
+    cont->notifyRegistrationRequest();
+}

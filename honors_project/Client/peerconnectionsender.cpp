@@ -1,6 +1,8 @@
-#include "serverconnection.h"
-#include "QDebug"
-int ServerConnection::OpenConnection(const char *hostname, int port){
+#include "peerconnectionsender.h"
+
+PeerConnectionSender::PeerConnectionSender(){
+}
+int PeerConnectionSender::OpenConnection(const char *hostname, int port){
     int sd;
     struct hostent *host;
     struct sockaddr_in addr;
@@ -22,7 +24,7 @@ int ServerConnection::OpenConnection(const char *hostname, int port){
     return sd;
 }
 
-SSL_CTX* ServerConnection::InitCTX(void){
+SSL_CTX* PeerConnectionSender::InitCTX(void){
     const SSL_METHOD *method;
     SSL_CTX *ctx;
 
@@ -37,7 +39,7 @@ SSL_CTX* ServerConnection::InitCTX(void){
     return ctx;
 }
 
-void ServerConnection::ShowCerts(SSL* ssl){
+void PeerConnectionSender::ShowCerts(SSL* ssl){
     X509 *cert;
     char *line;
 
@@ -56,18 +58,17 @@ void ServerConnection::ShowCerts(SSL* ssl){
         printf("No certificates.\n");
 }
 
-std::string ServerConnection::run(std::string hostname, std::string portnum, std::string message){ // might need to make this string a char *
-	SSL_CTX *ctx;
+std::string PeerConnectionSender::run(std::string hostname, std::string portnum, std::string message, std::string ac){ // might need to make this string a char *
+    SSL_CTX *ctx;
     int server;
     SSL *ssl;
     char buf[1024];
     int bytes;
     int pn = atoi(portnum.c_str());
-    if(hostname == "-1" || port == "-1")
+    if(hostname == "-1" || portnum == "-1")
         exit(-1);
     SSL_library_init();
     ctx = InitCTX();
-    qDebug() << pn << portnum.c_str();
     server = OpenConnection(hostname.c_str(), pn);
     ssl = SSL_new(ctx);      /* create new SSL connection state */
     SSL_set_fd(ssl, server);    /* attach the socket descriptor */
@@ -77,29 +78,12 @@ std::string ServerConnection::run(std::string hostname, std::string portnum, std
         printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
         ShowCerts(ssl);        /* get any certs */
         SSL_write(ssl, message.c_str(), strlen(message.c_str()));   /* encrypt & send message */
-        bytes = SSL_read(ssl, buf, sizeof(buf)); /* get reply & decrypt */
-        buf[bytes] = 0;
-        printf("Received: \"%s\"\n", buf);
         SSL_free(ssl);        /* release connection state */
     }
     close(server);         /* close socket */
     SSL_CTX_free(ctx);        /* release context */
     return std::string(buf);
 }
-std::string ServerConnection::sendMessage(std::string message){
-    getServerInformation();
-    return run(ip, port, message);
-}
-void ServerConnection::getServerInformation(){
-    std::ifstream file("serverloc.txt");
-    qDebug() << "opening file\n";
-    if(file.is_open()){
-        getline(file, ip);
-        getline(file, port);
-    }
-    else{
-        ip = "-1";
-        port = "-1";
-    }
-
+void PeerConnectionSender::sendMessage(std::string ip, std::string port, std::string ac, std::string message){
+    run(ip, port, message, ac);
 }

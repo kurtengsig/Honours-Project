@@ -39,5 +39,9 @@ std::string RequestHandler::handle(std::string input, database *d){
         d->registerUserReq(values[1], values[2], &output);
         return output;
     }
+    if(values[0] == "ACR"){
+        
+        return "";
+    }
     return "Unknown request";
 }

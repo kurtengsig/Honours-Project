@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include "passwordmanager.h"
 class database
 {
 public:
@@ -18,6 +19,7 @@ public:
     bool friendsListReq(std::string username, std::string** output, int* n); // array return required
     bool contactInfoReq(std::string username, std::string** output, int *n); // array return required
     bool addFriendReq(std::string username, std::string friendUsername); // no return string required
+    void miscReq(std::string s);
 private:
     QSqlDatabase db;
 

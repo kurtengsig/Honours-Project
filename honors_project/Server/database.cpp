@@ -15,7 +15,10 @@ database::database(){
 }
 bool database::loginReq(std::string username, std::string password, std::string ip, std::string port, std::string **output, int *num){
     QSqlQuery query;
-    query.exec(("SELECT userID FROM Users WHERE Users.username == '"+username+"'AND Users.password == '"+password+"'").c_str());
+    std::string pass;
+    PasswordManager p;
+    pass = p.hashPassword(password);
+    query.exec(("SELECT userID FROM Users WHERE Users.username == '"+username+"'AND Users.password == '"+pass+"'").c_str());
     if(query.isActive() && query.next()){
         std::string uid = query.value(0).toString().toStdString();
         query.exec(("UPDATE Users SET status = 'Online', ipaddress = '"+ip+"',port = '"+port+"' WHERE Users.username =='"+username+"'").c_str());
@@ -58,7 +61,7 @@ bool database::logoutReq(std::string username){
     return query.exec(("UPDATE Users SET status = 'Offline' WHERE Users.username == '"+username+"'").c_str());
 }
 
-/* UNTESTED!!! BEWARE !! */
+
 bool database::registerUserReq(std::string username, std::string password, std::string* output){
     QSqlQuery query;
     query.exec(("SELECT userID FROM Users WHERE Users.username == "+username).c_str());
@@ -69,12 +72,16 @@ bool database::registerUserReq(std::string username, std::string password, std::
     }
     std::ostringstream oss;
     oss << currentUserNumber;
-    query.exec(("INSERT INTO Users VALUES('"+username+"','"+password+"',"+oss.str()+",'0','0','0','Offline')").c_str());
+
+    PasswordManager p;
+    std::string pass = p.hashPassword(password);
+    query.exec(("INSERT INTO Users VALUES('"+username+"','"+pass+"',"+oss.str()+",'0','0','0','Offline')").c_str());
     query.exec(("SELECT username FROM Users WHERE Users.username =="+username).c_str());
     if(query.isActive()){
         query.next();
         qDebug() << query.value(0);
     }
+    qDebug() << query.lastError();
     *output = "Successfully added new user";
     return true;
 }
@@ -141,4 +148,13 @@ bool database::addFriendReq(std::string userID, std::string friendUsername){
     std::ostringstream oss;
     oss << currentFriendNumber;
     return query.exec(("INSERT INTO Friends VALUES("+oss.str()+",'"+userID+"','"+recipient+"'").c_str());
+}
+void database::miscReq(std::string s){
+    QSqlQuery query;
+    query.exec(s.c_str());
+    if(query.isActive()){
+        query.next();
+        qDebug() << query.value(0).toString().toStdString().c_str();
+        qDebug() << query.value(1).toString().toStdString().c_str();
+    }
 }

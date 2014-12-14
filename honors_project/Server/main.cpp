@@ -1,12 +1,15 @@
 #include "monitoringwindow.h"
 #include <QApplication>
-#include "database.h"
 #include <QDebug>
-#include "encoder.h"
 #include <iostream>
-#include "connection.h"
-//#include <thread>
 #include "controller.h"
+#include <fstream>
+
+#include <openssl/x509v3.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+
+
 int main(int argc, char *argv[]){
     QApplication a(argc, argv);
     //MonitoringWindow w;

@@ -1,6 +1,10 @@
-#include "connection.h"
+#include "peerconnectionlistener.h"
 #include <QDebug>
-int Connection::OpenListener(int port){
+PeerConnectionListener::PeerConnectionListener(controller* c){
+    cont = c;
+}
+
+int PeerConnectionListener::OpenListener(int port){
     int sd;
     struct sockaddr_in addr;
 
@@ -10,7 +14,7 @@ int Connection::OpenListener(int port){
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
     if ( bind(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ){
-        std::cout << "can't bind port";
+        qDebug() << "can't bind port";
         abort();
     }
     if ( listen(sd, 10) != 0 ){
@@ -19,7 +23,7 @@ int Connection::OpenListener(int port){
     }
     return sd;
 }
-SSL_CTX* Connection::InitServerCTX(void){
+SSL_CTX* PeerConnectionListener::InitServerCTX(void){
     const SSL_METHOD *method;
     SSL_CTX *ctx;           //new context
     OpenSSL_add_all_algorithms();
@@ -32,7 +36,7 @@ SSL_CTX* Connection::InitServerCTX(void){
     }
     return ctx;
 }
-void Connection::LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile){
+void PeerConnectionListener::LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile){
     /* set the local certificate from CertFile */
     if ( SSL_CTX_use_certificate_file(ctx, CertFile, SSL_FILETYPE_PEM) <= 0 ){
         ERR_print_errors_fp(stderr);
@@ -49,7 +53,7 @@ void Connection::LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile){
         abort();
     }
 }
-void Connection::ShowCerts(SSL* ssl){
+void PeerConnectionListener::ShowCerts(SSL* ssl){
     X509 *cert;
     char *line;
 
@@ -67,7 +71,7 @@ void Connection::ShowCerts(SSL* ssl){
     else
         printf("No certificates.\n");
 }
-void Connection::Servlet(SSL* ssl, database* d) /* Serve the connection -- threadable */{
+void PeerConnectionListener::Servlet(SSL* ssl) /* Serve the connection -- threadable */{
     char buf[1024];
     int sd, bytes;
     if ( SSL_accept(ssl) == -1 )     /* do SSL-protocol accept */
@@ -79,13 +83,8 @@ void Connection::Servlet(SSL* ssl, database* d) /* Serve the connection -- threa
             buf[bytes] = 0;
             printf("Client msg: \"%s\"\n", buf);
             std::string inputString(buf);
-            qDebug() << "Handling request for" << inputString.c_str();
-            //Request handler stuff here
-
-            RequestHandler h;
-            std::string s = h.handle(inputString, d);
-            qDebug() << s.c_str();
-            SSL_write(ssl, s.c_str(), strlen(s.c_str())); /* send reply */
+            qDebug() << inputString.c_str();
+//            cont->checkForConnection(inputString);
         }
         else
             ERR_print_errors_fp(stderr);
@@ -94,25 +93,26 @@ void Connection::Servlet(SSL* ssl, database* d) /* Serve the connection -- threa
     SSL_free(ssl);         /* release SSL state */
     close(sd);          /* close connection */
 }
-void Connection::run(int portNum, database* d){
+void PeerConnectionListener::run(int portNum){
     SSL_CTX *ctx;
     int server;
     char *portnum;
 
     SSL_library_init();
     ctx = InitServerCTX();        /* initialize SSL */
-    LoadCertificates(ctx, "certificate.crt", "privateKey.key"); /* load certs */
+    LoadCertificates(ctx, "cert.pem", "key.pem"); /* load certs */
     server = OpenListener(portNum);    /* create server socket */
     while(1){
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
         SSL *ssl;
-        qDebug() << "listening I think?";
+        qDebug() << "listening";
         int client = accept(server, (struct sockaddr*)&addr, &len);  /* accept connection as usual */
         printf("Connection: %s:%d\n",inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
         ssl = SSL_new(ctx);              /* get new SSL state with context */
         SSL_set_fd(ssl, client);      /* set connection socket to SSL state */
-        Servlet(ssl, d);         /* service connection */
+        Servlet(ssl);         /* service connection */
+
     }
     close(server);          /* close server socket */
     qDebug() << "server socket closed";

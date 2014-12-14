@@ -20,6 +20,7 @@ public:
 
 private slots:
     void on_submitButton_clicked();
+    void on_actionRegister_triggered();
 
 private:
     Ui::LoginWindow* ui;
@@ -29,3 +30,4 @@ private:
 };
 
 #endif // LOGINWINDOW_H
+
