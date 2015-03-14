@@ -1,21 +1,30 @@
 #ifndef SERVERCONNECTION_H
 #define SERVERCONNECTION_H
 #include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netdb.h>
+#include <stdio.h>
+#include <errno.h>
 #include <unistd.h>
+#include <malloc.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <resolv.h>
+#include <netdb.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <fstream>
 
 class ServerConnection{
 public:
-    ServerConnection();
-    std::string sendMessage(std::string m);
-
+    int OpenConnection(const char* hostname, int port);
+	SSL_CTX* InitCTX(void);
+	void ShowCerts(SSL* ssl);
+    std::string run(std::string hostname, std::string portnum, std::string message);
+    std::string sendMessage(std::string);
 private:
-    int status;
-    struct addrinfo  host_info;
-    struct addrinfo* host_info_list;
-    int socketfd;
+    void getServerInformation();
+    std::string ip;
+    std::string port;
 };
 
-#endif // SERVERCONNECTION_H
+#endif
+void getServerInformation();

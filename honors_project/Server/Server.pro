@@ -11,21 +11,22 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = Server
 TEMPLATE = app
-
+LIBS += -L/usr/lib -lssl -lcrypto -lcryptopp
+CONFIG += c++11
 
 SOURCES += main.cpp\
         monitoringwindow.cpp \
     database.cpp \
     encoder.cpp \
-    connection.cpp \
     controller.cpp \
-    requesthandler.cpp
+    requesthandler.cpp \
+    connection.cpp
 
 HEADERS  += monitoringwindow.h \
     database.h \
     encoder.h \
-    connection.h \
     controller.h \
-    requesthandler.h
+    requesthandler.h \
+    connection.h
 
 FORMS    += monitoringwindow.ui

@@ -1,21 +1,29 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netdb.h>
+
+#include <errno.h>
 #include <unistd.h>
+#include <malloc.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <resolv.h>
+#include "openssl/ssl.h"
+#include "openssl/err.h"
 #include "requesthandler.h"
 #include "database.h"
-class Connection
-{
-public:
-    Connection(database* d);
+
+class Connection{
 
 public:
-    int status;
-    struct addrinfo  host_info;
-    struct addrinfo* host_info_list;
+    int OpenListener(int port);
+	SSL_CTX* InitServerCTX(void);
+	void LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile);
+	void ShowCerts(SSL* ssl);
+    void Servlet(SSL* ssl, database *d);
+    void run(int portNum, database* d);
 };
 
-#endif // CONNECTION_H
+#endif

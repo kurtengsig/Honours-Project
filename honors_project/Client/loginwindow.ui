@@ -17,9 +17,9 @@
    <widget class="QLineEdit" name="usernameInput">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>122</x>
       <y>130</y>
-      <width>113</width>
+      <width>171</width>
       <height>27</height>
      </rect>
     </property>
@@ -30,9 +30,9 @@
    <widget class="QLineEdit" name="passwordInput">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>120</x>
       <y>160</y>
-      <width>113</width>
+      <width>171</width>
       <height>27</height>
      </rect>
     </property>
@@ -92,6 +92,13 @@
      <height>25</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionRegister"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -101,6 +108,11 @@
     <bool>false</bool>
    </attribute>
   </widget>
+  <action name="actionRegister">
+   <property name="text">
+    <string>Register</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

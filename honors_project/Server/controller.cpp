@@ -4,7 +4,7 @@ Controller::Controller(){
     d = new database();
     e = new encoder();
     while(1){
-        c = new Connection(d);
-        delete(c);
+        c->run(9000, d);
+        //delete(c);
     }
 }

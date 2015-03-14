@@ -10,6 +10,7 @@ public:
     std::string handle(std::string input, database* d);
 
 private:
+    bool validInput(std::string input);
     encoder* e;
     std::string* values;
     int size;
