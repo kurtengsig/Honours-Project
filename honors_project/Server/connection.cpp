@@ -24,7 +24,7 @@ SSL_CTX* Connection::InitServerCTX(void){
     SSL_CTX *ctx;           //new context
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-    method = SSLv3_server_method();  // create new server-method instance
+    method = TLSv1_2_server_method();  // create new server-method instance
     ctx = SSL_CTX_new(method);   // create new context from method
     if ( ctx == NULL ){
         ERR_print_errors_fp(stderr);
@@ -73,7 +73,7 @@ void Connection::Servlet(SSL* ssl, database* d) /* Serve the connection -- threa
     if ( SSL_accept(ssl) == -1 )     /* do SSL-protocol accept */
         ERR_print_errors_fp(stderr);
     else{
-        ShowCerts(ssl);        /* get any certificates */
+        //ShowCerts(ssl);        /* get any certificates */
         bytes = SSL_read(ssl, buf, sizeof(buf)); /* get request */
         if ( bytes > 0 ){
             buf[bytes] = 0;
@@ -107,7 +107,7 @@ void Connection::run(int portNum, database* d){
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
         SSL *ssl;
-        qDebug() << "listening I think?";
+        qDebug() << "Listening:";
         int client = accept(server, (struct sockaddr*)&addr, &len);  /* accept connection as usual */
         printf("Connection: %s:%d\n",inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
         ssl = SSL_new(ctx);              /* get new SSL state with context */

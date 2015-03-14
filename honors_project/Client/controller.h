@@ -13,6 +13,7 @@
 #include "peerconnectionsender.h"
 #include <thread>
 #include "peerconnectionlistener.h"
+#include "conversationcontroller.h"
 
 class ConversationController;
 class RegisterDialog;
@@ -28,20 +29,25 @@ public:
     void notifyRegistrationRequest();
     void notifyRegistrationSubmission(std::string username, std::string password);
     void generateKeyAndCert();
-    bool checkForConnection(std::string message);
-    void sendMessage(std::string ip, std::string port, std::string ac, std::string message);
+    bool handleNewMessage(std::string message);
+    void sendInitialMessage(std::string ip, std::string port, std::string ac, std::string message);
+    void sendGeneralMessage(std::string ip, std::string port, std::string ac, std::string message);
+    void getMessage(std::string* output, int* size);
 private:
     std::string myUserName;
-    std::string myUserID;
+    std::string myPassword;
     LoginWindow* w;
     FriendWindow *f;
     RegisterDialog *d;
     std::string ip;
     std::string port;
+    ConversationController* convoCont;
     void setIpAndPort();
     bool validInput(std::string input, std::string* output);
     void createFriendWindow(std::string *input, int size);
     std::vector<ConversationController *> currentConversations;
+    std::string authCodeReq(std::string friendName);
+    void setUsernameAndPass(std::string un, std::string pass);
 };
 
 #endif // CONTROLLER_H

@@ -2,6 +2,7 @@
 #define LOGINWINDOW_H
 #include "loginwindow.h"
 #include <QMainWindow>
+#include <QDebug>
 #include "ui_loginwindow.h"
 #include "controller.h"
 class controller;
@@ -22,6 +23,12 @@ private slots:
     void on_submitButton_clicked();
     void on_actionRegister_triggered();
 
+    void on_usernameInput_textChanged(const QString &arg1);
+
+    void on_passwordInput_textChanged(const QString &arg1);
+
+    void on_passwordInput_returnPressed();
+
 private:
     Ui::LoginWindow* ui;
     controller* cont;
@@ -30,4 +37,3 @@ private:
 };
 
 #endif // LOGINWINDOW_H
-

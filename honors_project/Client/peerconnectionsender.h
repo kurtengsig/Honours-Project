@@ -16,11 +16,11 @@
 class PeerConnectionSender{
 public:
     PeerConnectionSender();
-    void sendMessage(std::string ip, std::string port, std::string ac, std::string message);
+    void sendMessage(std::string ip, std::string port, std::string message);
     int OpenConnection(const char* hostname, int port);
     SSL_CTX* InitCTX(void);
     void ShowCerts(SSL* ssl);
-    std::string run(std::string hostname, std::string portnum, std::string ac, std::string message);
+    std::string run(std::string hostname, std::string portnum, std::string ac);
 };
 
 #endif // PEERCONNECTIONSENDER_H

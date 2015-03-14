@@ -28,7 +28,7 @@ SSL_CTX* ServerConnection::InitCTX(void){
 
     OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
     SSL_load_error_strings();   /* Bring in and register error messages */
-    method = SSLv3_client_method();  /* Create new client-method instance */
+    method = TLSv1_2_client_method();  /* Create new client-method instance */
     ctx = SSL_CTX_new(method);   /* Create new context */
     if ( ctx == NULL ){
         ERR_print_errors_fp(stderr);
@@ -67,19 +67,16 @@ std::string ServerConnection::run(std::string hostname, std::string portnum, std
         exit(-1);
     SSL_library_init();
     ctx = InitCTX();
-    qDebug() << pn << portnum.c_str();
     server = OpenConnection(hostname.c_str(), pn);
     ssl = SSL_new(ctx);      /* create new SSL connection state */
     SSL_set_fd(ssl, server);    /* attach the socket descriptor */
     if ( SSL_connect(ssl) == -1 )   /* perform the connection */
         ERR_print_errors_fp(stderr);
     else{
-        printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
-        ShowCerts(ssl);        /* get any certs */
         SSL_write(ssl, message.c_str(), strlen(message.c_str()));   /* encrypt & send message */
         bytes = SSL_read(ssl, buf, sizeof(buf)); /* get reply & decrypt */
         buf[bytes] = 0;
-        printf("Received: \"%s\"\n", buf);
+        printf("Received from server: \"%s\"\n", buf);
         SSL_free(ssl);        /* release connection state */
     }
     close(server);         /* close socket */

@@ -17,9 +17,9 @@
    <widget class="QLineEdit" name="usernameInput">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>122</x>
       <y>130</y>
-      <width>113</width>
+      <width>171</width>
       <height>27</height>
      </rect>
     </property>
@@ -30,9 +30,9 @@
    <widget class="QLineEdit" name="passwordInput">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>120</x>
       <y>160</y>
-      <width>113</width>
+      <width>171</width>
       <height>27</height>
      </rect>
     </property>

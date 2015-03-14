@@ -14,7 +14,7 @@ int PeerConnectionListener::OpenListener(int port){
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
     if ( bind(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ){
-        qDebug() << "can't bind port";
+        qDebug() << "can't bind port"<<port;
         abort();
     }
     if ( listen(sd, 10) != 0 ){
@@ -28,7 +28,7 @@ SSL_CTX* PeerConnectionListener::InitServerCTX(void){
     SSL_CTX *ctx;           //new context
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-    method = SSLv3_server_method();  // create new server-method instance
+    method = TLSv1_2_server_method();  // create new server-method instance
     ctx = SSL_CTX_new(method);   // create new context from method
     if ( ctx == NULL ){
         ERR_print_errors_fp(stderr);
@@ -38,6 +38,7 @@ SSL_CTX* PeerConnectionListener::InitServerCTX(void){
 }
 void PeerConnectionListener::LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile){
     /* set the local certificate from CertFile */
+    qDebug() << "Loading certs";
     if ( SSL_CTX_use_certificate_file(ctx, CertFile, SSL_FILETYPE_PEM) <= 0 ){
         ERR_print_errors_fp(stderr);
         abort();
@@ -83,8 +84,8 @@ void PeerConnectionListener::Servlet(SSL* ssl) /* Serve the connection -- thread
             buf[bytes] = 0;
             printf("Client msg: \"%s\"\n", buf);
             std::string inputString(buf);
-            qDebug() << inputString.c_str();
-//            cont->checkForConnection(inputString);
+            qDebug() << "Received message" << inputString.c_str();
+            cont->handleNewMessage(inputString);
         }
         else
             ERR_print_errors_fp(stderr);
@@ -96,7 +97,6 @@ void PeerConnectionListener::Servlet(SSL* ssl) /* Serve the connection -- thread
 void PeerConnectionListener::run(int portNum){
     SSL_CTX *ctx;
     int server;
-    char *portnum;
 
     SSL_library_init();
     ctx = InitServerCTX();        /* initialize SSL */
@@ -112,10 +112,15 @@ void PeerConnectionListener::run(int portNum){
         ssl = SSL_new(ctx);              /* get new SSL state with context */
         SSL_set_fd(ssl, client);      /* set connection socket to SSL state */
         Servlet(ssl);         /* service connection */
-
     }
     close(server);          /* close server socket */
     qDebug() << "server socket closed";
     SSL_CTX_free(ctx);         /* release context */
     qDebug() << "context freed";
+}
+bool PeerConnectionListener::validInput(std::string input){
+    if((input.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~!") != std::string::npos) || input == ""){
+        return false;
+    }
+    return true;
 }

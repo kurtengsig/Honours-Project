@@ -1,6 +1,9 @@
 #include "controller.h"
 
 controller::controller(){
+    myUserName = "";
+    myPassword = "";
+    //convoCont = new ConversationController(this);
     w = new LoginWindow(this);
     w->show();
 }
@@ -13,29 +16,38 @@ bool controller::validInput(std::string input, std::string* output){
     return true;
 }
 void controller::createFriendWindow(std::string* input, int size){
+    PeerConnectionListener* p = new PeerConnectionListener(this);
+    std::thread server(&PeerConnectionListener::run, p, atoi(port.c_str()));
+    server.detach();
     f = new FriendWindow(this);
     f->populateFriendList(input, size);
-    PeerConnectionListener p(this);
-    std::thread server (&PeerConnectionListener::run, &p, 8001);
-    server.detach();
     f->show();
 }
 void controller::notifyAddFriendRequest(std::string username){
     ServerConnection s;
     encoder e;
-    std::string input[3] = {"AFR", myUserID, username};
-    std::string message = e.encode(input, 3);
+    std::string input[4] = {"AFR", myUserName, myPassword, username};
+    std::string message = e.encode(input, 4);
     std::cout << s.sendMessage(message) << "\n";
 }
 void controller::notifyConversationCreation(std::string friendName){
-    ConversationController* cw;
+    ConversationController* cc;
     ServerConnection s;
     encoder e;
-    std::string input[3] = {"PIR", myUserID, friendName};
-    std::string message = e.encode(input, 3);
+    std::string input[4] = {"PIR", myUserName, myPassword, friendName};
+    std::string message = e.encode(input, 4);
     std::string response = s.sendMessage(message);
-    qDebug() << "response: " << response.c_str() << "\n";
-    cw = new ConversationController(this, myUserName, friendName, "0", "0");
+    qDebug() << "create convo req response: " << response.c_str();
+    std::string* output;
+    int size;
+    e.decode(&output, &size, response); // gets username ip (0) and port (1)
+    std::string authenticationCode = authCodeReq(friendName);
+    if(size == 2 && authenticationCode != "Invalid"){
+        cc = new ConversationController(this, myUserName, friendName,authenticationCode ,output[0], output[1]);
+        currentConversations.push_back(cc);
+        qDebug() << "Conversation was created";
+        //convoCont->setValues(myUserName, friendName, output[0], output[1], authenticationCode);
+    }
 }
 void controller::notifyLoginSubmission(std::string username, std::string password){
     std::string error;
@@ -51,20 +63,21 @@ void controller::notifyLoginSubmission(std::string username, std::string passwor
     message = e.encode(input, 5);
     ServerConnection serve;
     std::string response = serve.sendMessage(message);
+    qDebug() << "Received: "<<response.c_str();
     std::string* output;
     int size;
     e.decode(&output, &size, response);
-    if(output[0] == "1"){ // Success
-        myUserName = username;
-        myUserID = output[1];
+    if(output[0] == "1" && size >= 2 ){ // Success
+        setUsernameAndPass(username, password);
         w->hide();
         delete(w);
-        std::string* temp = new std::string[size-3];
-        for(int i=3; i<size; i++){
-            temp[i-3] = output [i];
+        //The first 2 values of the response are the code and number of friends, the rest are friend usernames
+        std::string* temp = new std::string[size-2];
+        for(int i=2; i<size; i++){
+            temp[i-2] = output [i];
         }
         generateKeyAndCert();
-        createFriendWindow(temp, size-3);
+        createFriendWindow(temp, size-2);
     }
     else if(output[0] ==  "0"){ // Successful login but no friends
         generateKeyAndCert();
@@ -136,22 +149,44 @@ void controller::generateKeyAndCert(){
     f = fopen("cert.pem", "wb");
     PEM_write_X509(f, x509);
     fclose(f);
-    system("chmod 600 key.pem");
+    //system("chmod 600 key.pem");
 
 }
-bool controller::checkForConnection(std::string message){
-    //HANDLE INCOMING MESSAGE
-    for(int i=0; i<currentConversations.size(); ++i){
-        if(currentConversations[i]->getAuthCode() == ""){
-            currentConversations[i]->updateIncomingMessage(message);
+bool controller::handleNewMessage(std::string message){
+    encoder e;
+    std::string* output;
+    int size;
+    e.decode(&output, &size, message);
+    qDebug() << "Received in new message" <<message.c_str();
+    if(size == 5){//friend is trying to start a new conversation
+        bool found = false;
+        for(int i=0; i<currentConversations.size(); ++i){
+            //Conversation already exists
+            if(currentConversations[i]->getAuthCode() == output[1]){
+                currentConversations[i]->updateIncomingMessage(output[2]);
+                found = true;
+            }
+        }
+        if(!found){//It is a new conversation request
+            std::string authCodes = authCodeReq(output[0]); // get the authorization code from the server
+            if(authCodes == output[1]){ //if the codes are the same
+                //Create a new chat window, give it the message and add this conversation to the list
+                ConversationController* n = new ConversationController(this, myUserName, output[0],authCodes, output[3], output[4]);
+                convoCont->updateIncomingMessage(output[2]);
+                currentConversations.push_back(n);
+            }
+            //Otherwise the message is dropped
         }
     }
 }
-void controller::sendMessage(std::string ip, std::string port, std::string ac, std::string message){
-    PeerConnectionSender *p;
-    //p->sendMessage(ip, port, ac, message);
-    qDebug() << "sending" << message.c_str();
+void controller::sendInitialMessage(std::string i, std::string p, std::string ac, std::string message){
+    encoder e;
+    std::string input[] = {myUserName, ac, message, ip, port};
+    std::string newMessage = e.encode(input, 5);
+    PeerConnectionSender *pcs;
+    pcs->sendMessage(i, p, newMessage);// send to ip and port
 }
+
 void controller::setIpAndPort(){
     std::ifstream file("myloc.txt");
     if(file.is_open()){
@@ -162,4 +197,16 @@ void controller::setIpAndPort(){
         ip = "-1";
         port = "-1";
     }
+}
+std::string controller::authCodeReq(std::string friendName){
+    ServerConnection s;
+    encoder en;
+    std::string input[] = {"ACR", myUserName, myPassword, friendName};
+    std::string message = en.encode(input, 4);
+    std::string response = s.sendMessage(message);
+    return response;
+}
+void controller::setUsernameAndPass(std::string un, std::string pass){
+    myUserName = un;
+    myPassword = pass;
 }

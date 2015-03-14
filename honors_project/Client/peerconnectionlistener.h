@@ -23,7 +23,7 @@ public:
     void ShowCerts(SSL* ssl);
     void Servlet(SSL* ssl);
     void run(int portNum);
-
+    bool validInput(std::string input);
 private:
     controller* cont;
 };

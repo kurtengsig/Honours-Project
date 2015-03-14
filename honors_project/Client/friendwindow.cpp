@@ -31,3 +31,4 @@ void FriendWindow::on_actionAdd_Friend_triggered(){
     AddFriendDialog* a = new AddFriendDialog(cont);
     a->show();
 }
+
