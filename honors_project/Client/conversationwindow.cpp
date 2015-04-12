@@ -15,13 +15,16 @@ ConversationWindow::ConversationWindow(ConversationController* c,QWidget *parent
 }
 
 ConversationWindow::~ConversationWindow(){
+    qDebug() << "deleting window";
     delete ui;
 }
 
 void ConversationWindow::on_sendMessageButton_clicked(){
     std::string message = ui->inputField->toPlainText().toStdString();
-    addMyMessage(message);
-    cont->sendMessage(message);
+    std::string cleanMessage = cont->sanitize(message);
+    ui->inputField->setText("");
+    addMyMessage(cleanMessage);
+    cont->sendMessage(cleanMessage);
 }
 void ConversationWindow::addTheirMessage(std::string message){
     ui->messageDisplayArea->insertHtml((friendName+": "+message+"<br>").c_str());
@@ -40,11 +43,14 @@ void ConversationWindow::setUserAndFriend(std::string name, std::string friends)
     //ui->friendLabel->setText(("Talking to: "+friendName).c_str());
 }
 void ConversationWindow::update(){
-    if(!isVisible){
-        isVisible = true;
-        this->show();
-    }
-    while(cont->haveMessage()){
+    //if(!isVisible){
+    //    isVisible = true;
+    //    this->show();
+    //}
+    while(cont->hasMessage()){
         addTheirMessage(cont->getMessage());
     }
+}
+void ConversationWindow::closeEvent(QCloseEvent *){
+    cont->notifyClose();
 }

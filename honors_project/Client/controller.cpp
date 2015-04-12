@@ -3,7 +3,6 @@
 controller::controller(){
     myUserName = "";
     myPassword = "";
-    //convoCont = new ConversationController(this);
     w = new LoginWindow(this);
     w->show();
 }
@@ -37,16 +36,38 @@ void controller::notifyConversationCreation(std::string friendName){
     std::string input[4] = {"PIR", myUserName, myPassword, friendName};
     std::string message = e.encode(input, 4);
     std::string response = s.sendMessage(message);
-    qDebug() << "create convo req response: " << response.c_str();
     std::string* output;
     int size;
     e.decode(&output, &size, response); // gets username ip (0) and port (1)
+
+    //Fetches the authentication code from the server
     std::string authenticationCode = authCodeReq(friendName);
+
     if(size == 2 && authenticationCode != "Invalid"){
-        cc = new ConversationController(this, myUserName, friendName,authenticationCode ,output[0], output[1]);
+
+        std::vector<std::string> messages;
+        std::vector<PendingMessage> newPending;
+
+        for(int i=0; i<pendingMessages.size(); i++){
+            if(pendingMessages.at(i).getOrigin() == friendName){
+                messages.push_back(pendingMessages.at(i).getMessage());
+            }
+            else{
+                newPending.push_back(pendingMessages.at(i));
+            }
+        }
+        pendingMessages = newPending;
+
+        //Case of a message coming to an existing controller
+        for(int i=0; i< currentConversations.size(); i++){
+            if(authenticationCode == currentConversations.at(i)->getAuthCode()){
+                currentConversations.at(i)->reOpenWindow(&messages);
+                return;
+            }
+        }
+
+        cc = new ConversationController(this, myUserName, friendName,authenticationCode ,output[0], output[1], &messages); //add pending messages here
         currentConversations.push_back(cc);
-        qDebug() << "Conversation was created";
-        //convoCont->setValues(myUserName, friendName, output[0], output[1], authenticationCode);
     }
 }
 void controller::notifyLoginSubmission(std::string username, std::string password){
@@ -110,15 +131,15 @@ void controller::notifyRegistrationSubmission(std::string username, std::string 
 }
 void controller::generateKeyAndCert(){
 
-    EVP_PKEY * pkey; //Used for creating the private key object
+    EVP_PKEY* pkey; //Used for creating the private key object
     pkey = EVP_PKEY_new();
 
-    RSA * rsa; //Generates the private key using RSA
+    RSA* rsa; //Generates the private key using RSA
     rsa = RSA_generate_key(2048, RSA_F4, NULL, NULL);
 
     EVP_PKEY_assign_RSA(pkey, rsa);
 
-    X509 * x509; //Certificate object
+    X509* x509; //Certificate object
     x509 = X509_new();
 
     ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
@@ -128,7 +149,7 @@ void controller::generateKeyAndCert(){
 
     X509_set_pubkey(x509, pkey); //Sets the public key for the cert
 
-    X509_NAME * name;
+    X509_NAME* name;
     name = X509_get_subject_name(x509);
 
     std::string s = "Peer to peer IM -user"+myUserName;
@@ -152,39 +173,33 @@ void controller::generateKeyAndCert(){
     //system("chmod 600 key.pem");
 
 }
-bool controller::handleNewMessage(std::string message){
+void controller::handleNewMessage(std::string message){
     encoder e;
     std::string* output;
     int size;
     e.decode(&output, &size, message);
-    qDebug() << "Received in new message" <<message.c_str();
-    if(size == 5){//friend is trying to start a new conversation
-        bool found = false;
-        for(int i=0; i<currentConversations.size(); ++i){
-            //Conversation already exists
-            if(currentConversations[i]->getAuthCode() == output[1]){
-                currentConversations[i]->updateIncomingMessage(output[2]);
-                found = true;
-            }
-        }
-        if(!found){//It is a new conversation request
-            std::string authCodes = authCodeReq(output[0]); // get the authorization code from the server
-            if(authCodes == output[1]){ //if the codes are the same
-                //Create a new chat window, give it the message and add this conversation to the list
-                ConversationController* n = new ConversationController(this, myUserName, output[0],authCodes, output[3], output[4]);
-                convoCont->updateIncomingMessage(output[2]);
-                currentConversations.push_back(n);
-            }
-            //Otherwise the message is dropped
+    qDebug() << currentConversations.size();
+    //Check if the conversation exists
+    for(unsigned int i=0; i<currentConversations.size(); ++i){
+        if((currentConversations[i]->getAuthCode() == output[1]) && currentConversations[i]->inUse()){
+            qDebug() << "in use";
+            currentConversations[i]->updateIncomingMessage(output[2]);
+            return;
         }
     }
+    // If it doesnt exist, needs to check to see if the person contacting you is a friend of yours
+    std::string authCodes = authCodeReq(output[0]);//Gets the authentication code for the user with that username
+    if(authCodes == output[1]){ //if the codes are the same, its a valid message
+        pendingMessages.push_back(PendingMessage(output[0], output[2]));
+    }
+    //Otherwise the message is dropped
 }
 void controller::sendInitialMessage(std::string i, std::string p, std::string ac, std::string message){
     encoder e;
     std::string input[] = {myUserName, ac, message, ip, port};
     std::string newMessage = e.encode(input, 5);
-    PeerConnectionSender *pcs;
-    pcs->sendMessage(i, p, newMessage);// send to ip and port
+    PeerConnectionSender pcs; // MIGHT NEED TO BE A POINTER
+    pcs.sendMessage(i, p, newMessage);// send to ip and port
 }
 
 void controller::setIpAndPort(){
@@ -198,6 +213,8 @@ void controller::setIpAndPort(){
         port = "-1";
     }
 }
+
+//This function gets the authorization code for the current user and the provided username
 std::string controller::authCodeReq(std::string friendName){
     ServerConnection s;
     encoder en;
@@ -209,4 +226,11 @@ std::string controller::authCodeReq(std::string friendName){
 void controller::setUsernameAndPass(std::string un, std::string pass){
     myUserName = un;
     myPassword = pass;
+}
+int controller::getPendingMessages(PendingMessage** m){
+    if(pendingMessages.size() > 0){
+        *m = &pendingMessages[0];
+        return pendingMessages.size();
+    }
+    return 0;
 }

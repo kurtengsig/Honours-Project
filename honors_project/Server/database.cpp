@@ -4,7 +4,7 @@
 
 database::database(){
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("database.db3");
+    db.setDatabaseName("hp.db3");
     db.open();
     QSqlQuery query;
     query.exec("SELECT MAX(userID) FROM Users");
@@ -17,7 +17,13 @@ database::database(){
 bool database::loginReq(std::string username, std::string password, std::string ip, std::string port, std::string **output, int *num){
     QSqlQuery query;
     std::string pass;
-    pass = hashPassword(password);
+    std::string salt ="";
+    query.exec(("SELECT salt FROM Users WHERE Users.username == '"+username+"'").c_str());
+    if(query.isActive()){
+        query.next();
+        salt = query.value(0).toString().toStdString();
+    }
+    pass = hashPassword(password, salt);
     query.exec(("SELECT userID FROM Users WHERE Users.username == '"+username+"'AND Users.password == '"+pass+"'").c_str());
     if(query.isActive() && query.next()){
         std::string uid = query.value(0).toString().toStdString();
@@ -68,9 +74,9 @@ bool database::registerUserReq(std::string username, std::string password, std::
     }
     std::ostringstream oss;
     oss << currentUserNumber;
-
-    std::string pass = hashPassword(password);
-    query.exec(("INSERT INTO Users VALUES('"+username+"','"+pass+"',"+oss.str()+",'0','0','0','Offline')").c_str());
+    std::string salt = getSalt();
+    std::string pass = hashPassword(password, salt);
+    query.exec(("INSERT INTO Users VALUES('"+username+"','"+pass+"','"+salt+"',"+oss.str()+",'0','0','0','Offline')").c_str());
     query.exec(("SELECT username FROM Users WHERE Users.username =="+username).c_str());
     if(query.isActive()){
         query.next();
@@ -143,9 +149,13 @@ std::string database::addFriendReq(std::string username, std::string friendUsern
     recipient = query.value(0).toString().toStdString();
     std::ostringstream oss;
     oss << currentFriendNumber;
+    std::ostringstream oss2;
+    oss2 << (currentFriendNumber+1);
     qDebug() << "query" << ("INSERT INTO Friends VALUES("+oss.str()+",'"+init+"','"+recipient+"')").c_str();
-    if(query.exec(("INSERT INTO Friends VALUES("+oss.str()+",'"+init+"','"+recipient+"')").c_str())){
-        currentFriendNumber +=1;
+    std::string salt = getSalt();
+    if((query.exec(("INSERT INTO Friends VALUES("+oss.str()+",'"+init+"','"+recipient+"','"+salt+"')").c_str())) &&
+            (query.exec(("INSERT INTO Friends VALUES("+oss2.str()+",'"+recipient+"','"+init+"','"+salt+"')").c_str()))   ){
+        currentFriendNumber +=2;
         return "Succesfully added";
     }
     qDebug() << query.lastError();
@@ -154,6 +164,7 @@ std::string database::addFriendReq(std::string username, std::string friendUsern
 std::string database::getAuthenticationCode(std::string username1, std::string password, std::string username2){
     if(verifyUser(username1, password)){
         QSqlQuery query;
+        QSqlQuery query2;
         std::string output;
         query.exec(("SELECT userID FROM Users WHERE Users.username == '"+username1+"' OR Users.username == '"+username2+"'").c_str());
         if(query.isActive()){
@@ -170,7 +181,13 @@ std::string database::getAuthenticationCode(std::string username1, std::string p
             else{
                 output = std::to_string(item1)+""+std::to_string(item2);
             }
-            output = hashPassword(output);
+            query2.exec(("SELECT salt FROM Friends WHERE userID == '"+std::to_string(item1)+"' AND friendID == '"+std::to_string(item2)+"'").c_str());
+            std::string salt = "";
+            if(query2.isActive()){
+                query2.next();
+                salt = query2.value(0).toString().toStdString();
+            }
+            output = hashPassword(output, salt);
             return output;
         }
     }
@@ -186,30 +203,58 @@ void database::miscReq(std::string s){
 }
 bool database::verifyUser(std::string username, std::string password){
     QSqlQuery query;
+    std::string salt = "";
+    query.exec(("Select salt FROM Users WHERE Users.username == '"+username+"'").c_str());
+    if(query.isActive()){
+        query.next();
+        salt = query.value(0).toString().toStdString();
+    }
+    query.clear();
     std::string pass;
-    pass = hashPassword(password);
+    pass = hashPassword(password, salt);
     query.exec(("SELECT userID FROM Users WHERE Users.username == '"+username+"'AND Users.password == '"+pass+"'").c_str());
     if(query.isActive() && query.next()){
         return true;
     }
     return false;
 }
-std::string database::hashPassword(std::string password){
-    byte const* pass = (byte*) password.data();
-    unsigned int nDataLen = password.size();
+std::string database::hashPassword(std::string password, std::string salt){
+    std::string p = password+""+salt;
+    byte const* pass = (byte*) p.data();
+    unsigned int nDataLen = p.size();
     byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
     CryptoPP::SHA256().CalculateDigest(digest, pass, nDataLen);
 
-    CryptoPP::HexEncoder encoder;
+    CryptoPP::HexEncoder enc;
     std::string output;
-    encoder.Put(digest, sizeof(digest));
-    encoder.MessageEnd();
+    enc.Put(digest, sizeof(digest));
+    enc.MessageEnd();
 
-    CryptoPP::word64 size = encoder.MaxRetrievable();
+    CryptoPP::word64 size = enc.MaxRetrievable();
     if(size){
         output.resize(size);
-        encoder.Get((byte*)output.data(), output.size());
+        enc.Get((byte*)output.data(), output.size());
+    }
+    return output;
+}
+
+std::string database::getSalt(){
+    CryptoPP::AutoSeededRandomPool rng;
+    const unsigned int BLOCKSIZE = 8 * 8;
+    byte random[BLOCKSIZE];
+    rng.GenerateBlock(random, BLOCKSIZE );
+
+
+    CryptoPP::HexEncoder enc;
+    std::string output;
+    enc.Put(random, sizeof(random));
+    enc.MessageEnd();
+
+    CryptoPP::word64 size = enc.MaxRetrievable();
+    if(size){
+        output.resize(size);
+        enc.Get((byte*)output.data(), output.size());
     }
     return output;
 }

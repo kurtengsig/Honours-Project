@@ -21,13 +21,16 @@ public:
     explicit FriendWindow(controller *c, QWidget *parent = 0);
     ~FriendWindow();
     void populateFriendList(std::string*, int count);
-
+    int getFriends(std::string *);
+    void newPendingMessageForUser(std::string user);
+private:
+    void closeEvent(QCloseEvent *);
 
 private slots:
     void on_actionLogout_triggered();
     void on_friendList_itemDoubleClicked(QListWidgetItem *item);
-
     void on_actionAdd_Friend_triggered();
+    void update();
 
 private:
     Ui::FriendWindow *ui;

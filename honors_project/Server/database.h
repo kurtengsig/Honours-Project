@@ -10,6 +10,7 @@
 #include "cryptopp/cryptlib.h"
 #include "cryptopp/sha.h"
 #include "cryptopp/hex.h"
+#include <cryptopp/osrng.h>
 
 class database
 {
@@ -25,9 +26,10 @@ public:
     std::string getAuthenticationCode(std::string username1, std::string password, std::string username2);
     bool verifyUser(std::string username, std::string password);
     void miscReq(std::string s);
+    std::string getSalt();
+    std::string hashPassword(std::string, std::string salt);
 private:
     QSqlDatabase db;
-    std::string hashPassword(std::string);
     int currentUserNumber;
     int currentFriendNumber;
 };

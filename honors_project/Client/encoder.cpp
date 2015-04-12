@@ -37,7 +37,7 @@ void encoder::decode(std::string** output, int* size, std::string input){
     v.push_back(s);
     std::string* temp = new std::string[v.size()];
     *size = v.size();
-    for(int i =0; i < v.size(); i++)
+    for(unsigned int i =0; i < v.size(); i++)
         temp[i] = v[i];
     *output = temp;
 }

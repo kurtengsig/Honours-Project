@@ -20,15 +20,9 @@ public:
     void addMyMessage(std::string message);
     void setUserAndFriend(std::string name, std::string friends);
 
-//public slots:
-  //  void addMessage(std::string message);
-
 private slots:
     void on_sendMessageButton_clicked();
     void update();
-
-//signals:
-  //  void messagesChanged(std::string);
 
 private:
     Ui::ConversationWindow *ui;
@@ -37,6 +31,7 @@ private:
     ConversationController* cont;
     std::string inputString;
     bool isVisible;
+    void closeEvent(QCloseEvent *);
 };
 
 #endif // CONVERSATIONWINDOW_H

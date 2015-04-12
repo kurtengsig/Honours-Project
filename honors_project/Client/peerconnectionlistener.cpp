@@ -82,9 +82,9 @@ void PeerConnectionListener::Servlet(SSL* ssl) /* Serve the connection -- thread
         bytes = SSL_read(ssl, buf, sizeof(buf)); /* get request */
         if ( bytes > 0 ){
             buf[bytes] = 0;
-            printf("Client msg: \"%s\"\n", buf);
+            //printf("Client msg: \"%s\"\n", buf);
             std::string inputString(buf);
-            qDebug() << "Received message" << inputString.c_str();
+            //qDebug() << "Received message" << inputString.c_str();
             cont->handleNewMessage(inputString);
         }
         else
@@ -99,9 +99,9 @@ void PeerConnectionListener::run(int portNum){
     int server;
 
     SSL_library_init();
-    ctx = InitServerCTX();        /* initialize SSL */
-    LoadCertificates(ctx, "cert.pem", "key.pem"); /* load certs */
-    server = OpenListener(portNum);    /* create server socket */
+    ctx = InitServerCTX();
+    LoadCertificates(ctx, "cert.pem", "key.pem");
+    server = OpenListener(portNum);
     while(1){
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);

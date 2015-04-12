@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     serverconnection.cpp \
     registerdialog.cpp \
     peerconnectionlistener.cpp \
-    peerconnectionsender.cpp
+    peerconnectionsender.cpp \
+    pendingmessage.cpp
 
 HEADERS  += loginwindow.h \
     controller.h \
@@ -36,7 +37,8 @@ HEADERS  += loginwindow.h \
     serverconnection.h \
     registerdialog.h \
     peerconnectionlistener.h \
-    peerconnectionsender.h
+    peerconnectionsender.h \
+    pendingmessage.h
 
 FORMS    += loginwindow.ui \
     friendwindow.ui \

@@ -97,25 +97,22 @@ void Connection::Servlet(SSL* ssl, database* d) /* Serve the connection -- threa
 void Connection::run(int portNum, database* d){
     SSL_CTX *ctx;
     int server;
-    char *portnum;
 
     SSL_library_init();
-    ctx = InitServerCTX();        /* initialize SSL */
-    LoadCertificates(ctx, "certificate.crt", "privateKey.key"); /* load certs */
-    server = OpenListener(portNum);    /* create server socket */
+    ctx = InitServerCTX();
+    LoadCertificates(ctx, "certificate.crt", "privateKey.key");
+    server = OpenListener(portNum);
     while(1){
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
         SSL *ssl;
         qDebug() << "Listening:";
-        int client = accept(server, (struct sockaddr*)&addr, &len);  /* accept connection as usual */
+        int client = accept(server, (struct sockaddr*)&addr, &len);
         printf("Connection: %s:%d\n",inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-        ssl = SSL_new(ctx);              /* get new SSL state with context */
-        SSL_set_fd(ssl, client);      /* set connection socket to SSL state */
-        Servlet(ssl, d);         /* service connection */
+        ssl = SSL_new(ctx);
+        SSL_set_fd(ssl, client);
+        Servlet(ssl, d);
     }
-    close(server);          /* close server socket */
-    qDebug() << "server socket closed";
-    SSL_CTX_free(ctx);         /* release context */
-    qDebug() << "context freed";
+    close(server);
+    SSL_CTX_free(ctx);
 }

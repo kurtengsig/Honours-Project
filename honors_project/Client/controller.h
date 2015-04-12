@@ -14,6 +14,7 @@
 #include <thread>
 #include "peerconnectionlistener.h"
 #include "conversationcontroller.h"
+#include "pendingmessage.h"
 
 class ConversationController;
 class RegisterDialog;
@@ -29,10 +30,10 @@ public:
     void notifyRegistrationRequest();
     void notifyRegistrationSubmission(std::string username, std::string password);
     void generateKeyAndCert();
-    bool handleNewMessage(std::string message);
+    void handleNewMessage(std::string message);
     void sendInitialMessage(std::string ip, std::string port, std::string ac, std::string message);
-    void sendGeneralMessage(std::string ip, std::string port, std::string ac, std::string message);
-    void getMessage(std::string* output, int* size);
+    int getPendingMessages(PendingMessage **m);
+
 private:
     std::string myUserName;
     std::string myPassword;
@@ -41,6 +42,7 @@ private:
     RegisterDialog *d;
     std::string ip;
     std::string port;
+    std::vector<PendingMessage> pendingMessages;
     ConversationController* convoCont;
     void setIpAndPort();
     bool validInput(std::string input, std::string* output);
